@@ -19,7 +19,6 @@ from __future__ import annotations
 
 from collections.abc import Callable, Generator
 from contextlib import contextmanager
-from copy import copy
 from logging import DEBUG, ERROR, INFO, WARNING
 from typing import TYPE_CHECKING, Any, cast
 from weakref import WeakKeyDictionary
@@ -168,8 +167,7 @@ class PsrpHook(BaseHook):
 
         Upon exit, the commands will be invoked.
         """
-        logger = copy(self.log)
-        logger.setLevel(self._logging_level)
+        logger = self.log
         local_context = self._conn is None
         if local_context:
             self.__enter__()

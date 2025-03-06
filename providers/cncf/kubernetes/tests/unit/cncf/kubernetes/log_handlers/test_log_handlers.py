@@ -27,7 +27,6 @@ from unittest.mock import patch
 import pytest
 from kubernetes.client import models as k8s
 
-from airflow.config_templates.airflow_local_settings import DEFAULT_LOGGING_CONFIG
 from airflow.executors import executor_loader
 from airflow.models.dag import DAG
 from airflow.models.taskinstance import TaskInstance
@@ -66,7 +65,6 @@ class TestFileTaskLogHandler:
             clear_db_dag_bundles()
 
     def setup_method(self):
-        logging.config.dictConfig(DEFAULT_LOGGING_CONFIG)
         logging.root.disabled = False
         self.clean_up()
         # We use file task handler by default.
