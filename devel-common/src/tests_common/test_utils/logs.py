@@ -23,6 +23,7 @@ import logging
 import re
 import sys
 import traceback
+from collections import namedtuple
 from collections.abc import MutableMapping
 from contextlib import ExitStack, contextmanager
 from typing import TYPE_CHECKING, NoReturn
@@ -187,12 +188,18 @@ class StructlogCapture:
         from structlog import DropEvent
         from structlog._log_levels import map_method_name
 
-        from airflow_shared.logging.structlog import NamedBytesLogger, NamedWriteLogger
+        logger_types: tuple[type, ...]
+        try:
+            from airflow_shared.logging.structlog import NamedBytesLogger, NamedWriteLogger
+
+            logger_types = (NamedBytesLogger, NamedWriteLogger)
+        except ModuleNotFoundError:
+            logger_types = (namedtuple("Compat", "name"),)
 
         logger_name = (
             event_dict.get("logger_name")
             or event_dict.get("logger")
-            or (isinstance(logger, (NamedBytesLogger, NamedWriteLogger)) and logger.name)
+            or (isinstance(logger, logger_types) and logger.name)
             or ""
         )
         if not self._logger or logger_name.startswith(self._logger):
