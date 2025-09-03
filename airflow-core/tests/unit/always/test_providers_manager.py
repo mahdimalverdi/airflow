@@ -60,6 +60,7 @@ class TestProviderManager:
 
     def test_providers_are_loaded(self):
         with self._caplog.at_level(logging.WARNING):
+            self._caplog.clear()
             provider_manager = ProvidersManager()
             provider_list = list(provider_manager.providers.keys())
             # No need to sort the list - it should be sorted alphabetically !
