@@ -22,7 +22,7 @@ import logging
 import os
 import re
 import sys
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from functools import cache, partial
 from typing import TYPE_CHECKING, Any, BinaryIO, Generic, TextIO, TypeVar, cast
 
@@ -71,6 +71,24 @@ def _make_airflow_structlogger(min_level):
     def name(self):
         return self._logger.name
 
+    # Work around an issue in structlog https://github.com/hynek/structlog/issues/745
+    def make_method(
+        level: int,
+    ) -> Callable[..., Any]:
+        name = LEVEL_TO_NAME[level]
+
+        def meth(self: Any, event: str, *args: Any, **kw: Any) -> Any:
+            if not args:
+                return self._proxy_to_logger(name, event, **kw)
+
+            # See for reason https://github.com/python/cpython/blob/3.13/Lib/logging/__init__.py#L307-L326
+            if args and len(args) == 1 and isinstance(args[0], Mapping) and args[0]:
+                args = args[0]
+            return self._proxy_to_logger(name, event % args, **kw)
+
+        meth.__name__ = name
+        return meth
+
     base = structlog.make_filtering_bound_logger(min_level)
 
     cls = type(
@@ -80,7 +98,8 @@ def _make_airflow_structlogger(min_level):
             "isEnabledFor": isEnabledFor,
             "getEffectiveLevel": getEffectiveLevel,
             "name": name,
-        },
+        }
+        | {name: make_method(lvl) for lvl, name in LEVEL_TO_NAME.items()},
     )
     LEVEL_TO_FILTERING_LOGGER[min_level] = cls
     return cls
