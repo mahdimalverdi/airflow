@@ -250,12 +250,12 @@ class TestProviderManager:
                 assert len(connections_list) > 60
         if len(self._caplog.records) != 0:
             real_warning_count = 0
-            for record in self._caplog.records:
+            for record in self._caplog.entries:
                 # When there is error importing provider that is excluded the provider name is in the message
-                if any(excluded_provider in record.message for excluded_provider in excluded_providers):
+                if any(excluded_provider in record["event"] for excluded_provider in excluded_providers):
                     continue
-                print(record.message, file=sys.stderr)
-                print(record.exc_info, file=sys.stderr)
+                print(record["event"], file=sys.stderr)
+                print(record.get("exc_info"), file=sys.stderr)
                 real_warning_count += 1
             if real_warning_count:
                 if PY313:
